@@ -1,0 +1,694 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>麻将海克斯联机房</title>
+  <style>
+    :root {
+      --bg-main: #eef7f5;
+      --bg-accent: #f6f2e9;
+      --ink: #1f2937;
+      --sub: #526072;
+      --brand: #0b6e69;
+      --brand-2: #088178;
+      --line: #d4e3df;
+      --card: #ffffff;
+      --danger: #be123c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, #dff4ef, transparent 42%),
+        radial-gradient(circle at 88% 18%, #fff2db, transparent 35%),
+        linear-gradient(145deg, var(--bg-main), var(--bg-accent));
+    }
+
+    .page {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 20px 14px 28px;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(11, 110, 105, 0.10), rgba(255, 255, 255, 0.82));
+      box-shadow: 0 10px 24px rgba(11, 110, 105, 0.08);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2vw, 1.9rem);
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--sub);
+    }
+
+    .toolbar {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 8px 18px rgba(8, 129, 120, 0.24);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    button.ghost {
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      box-shadow: none;
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #be123c, #e11d48);
+      box-shadow: 0 8px 18px rgba(225, 29, 72, 0.25);
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 0.92rem;
+      color: var(--sub);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .players {
+      margin-top: 16px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .player {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(17, 24, 39, 0.05);
+      animation: fadeIn 220ms ease;
+    }
+
+    .player.me {
+      border-color: #66c0b7;
+      box-shadow: 0 10px 24px rgba(11, 110, 105, 0.15);
+    }
+
+    .player header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .player h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .me-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #d7f4ef;
+      color: #045a52;
+      font-size: 0.75rem;
+    }
+
+    .count {
+      font-size: 0.82rem;
+      color: var(--sub);
+    }
+
+    .hex-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .hex-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfefd;
+      padding: 10px;
+    }
+
+    .hex-card h3 {
+      margin: 0;
+      font-size: 0.96rem;
+    }
+
+    .hex-card p {
+      margin: 8px 0 10px;
+      font-size: 0.88rem;
+      color: var(--sub);
+      line-height: 1.45;
+    }
+
+    .hex-card button {
+      padding: 8px 12px;
+      font-size: 0.88rem;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--sub);
+      font-size: 0.88rem;
+      background: #fafdfc;
+    }
+
+    .logs {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      padding: 12px;
+    }
+
+    .logs h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .log-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px;
+      font-size: 0.88rem;
+      background: #fbfefd;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 20;
+    }
+
+    .overlay.visible {
+      display: flex;
+    }
+
+    .dialog {
+      width: min(430px, 100%);
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 16px;
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.2);
+    }
+
+    .dialog h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .dialog p {
+      margin: 8px 0 12px;
+      color: var(--sub);
+      line-height: 1.45;
+    }
+
+    .dialog input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+
+    .dialog label.choice {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #fafdfc;
+    }
+
+    .dialog .row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .actions button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <h1>麻将海克斯联机房</h1>
+      <p>所有玩家共用一个海克斯池，抽取不重复，抽完自动进入下一轮。</p>
+    </header>
+
+    <section class="toolbar">
+      <div class="actions">
+        <button id="draw-btn" type="button">抽取海克斯</button>
+        <button id="refresh-btn" class="ghost" type="button">立即同步</button>
+        <button id="clear-btn" class="danger" type="button">清空房间</button>
+      </div>
+
+      <div id="status" class="status">连接中...</div>
+    </section>
+
+    <section id="players" class="players"></section>
+
+    <section class="logs">
+      <h2>海克斯使用记录</h2>
+      <div id="logs" class="log-list"></div>
+    </section>
+  </div>
+
+  <div id="join-layer" class="overlay visible">
+    <form id="join-form" class="dialog">
+      <h2>加入房间</h2>
+      <p>进入房间需要输入姓名。刷新页面后会自动恢复你的身份与海克斯。</p>
+      <input id="join-name" type="text" maxlength="20" placeholder="请输入你的姓名" required />
+      <button type="submit">进入房间</button>
+    </form>
+  </div>
+
+  <div id="use-layer" class="overlay">
+    <div class="dialog">
+      <h2>使用海克斯</h2>
+      <p id="use-hex-title"></p>
+
+      <div id="use-target-options"></div>
+
+      <div class="row">
+        <button id="cancel-use" class="ghost" type="button">取消</button>
+        <button id="confirm-use" type="button">确认使用</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'mahjong_hex_player_id_v2';
+    let playerId = localStorage.getItem(STORAGE_KEY) || '';
+    let currentState = null;
+    let activeCardId = '';
+    let lastRenderedVersion = -1;
+    let syncInFlight = false;
+
+    const statusEl = document.getElementById('status');
+    const drawBtn = document.getElementById('draw-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const playersEl = document.getElementById('players');
+    const logsEl = document.getElementById('logs');
+    const joinLayer = document.getElementById('join-layer');
+    const joinForm = document.getElementById('join-form');
+    const joinName = document.getElementById('join-name');
+    const useLayer = document.getElementById('use-layer');
+    const useHexTitle = document.getElementById('use-hex-title');
+    const useTargetOptionsEl = document.getElementById('use-target-options');
+    const confirmUseBtn = document.getElementById('confirm-use');
+    const cancelUseBtn = document.getElementById('cancel-use');
+
+    function setStatus(text, isError = false) {
+      statusEl.textContent = text;
+      statusEl.classList.toggle('error', isError);
+    }
+
+    function esc(text) {
+      return String(text ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    async function request(path, method = 'GET', formData = null) {
+      const options = { method };
+      if (method !== 'GET') {
+        options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
+        options.body = new URLSearchParams(formData || {}).toString();
+      }
+
+      let response;
+      try {
+        response = await fetch(path, options);
+      } catch (error) {
+        throw new Error('网络连接失败（Failed to fetch）。请确认链接可访问且房主服务在线。');
+      }
+
+      let payload;
+      try {
+        payload = await response.json();
+      } catch (error) {
+        throw new Error('服务器返回内容不是 JSON');
+      }
+
+      if (!response.ok || payload.ok === false) {
+        const message = payload && payload.error ? payload.error : `请求失败(${response.status})`;
+        const err = new Error(message);
+        err.payload = payload;
+        throw err;
+      }
+
+      return payload;
+    }
+
+    function renderPlayers(state) {
+      if (!Array.isArray(state.players) || state.players.length === 0) {
+        playersEl.innerHTML = '<div class="empty">当前房间没有玩家，先输入姓名加入吧。</div>';
+        return;
+      }
+
+      playersEl.innerHTML = state.players.map(player => {
+        const cards = Array.isArray(player.hexes) ? player.hexes : [];
+        const hexCount = Number(player.hexCount ?? cards.length);
+        let cardsHtml = '';
+        if (!player.isMe) {
+          cardsHtml = '<div class="empty">该玩家海克斯已隐藏</div>';
+        } else if (cards.length === 0) {
+          cardsHtml = '<div class="empty">暂无海克斯</div>';
+        } else {
+          cardsHtml = cards.map(card => `
+            <div class="hex-card">
+              <h3>${esc(card.name)}</h3>
+              <p>${esc(card.desc)}</p>
+              <button class="use-btn" type="button" data-card-id="${esc(card.cardId)}" data-card-name="${esc(card.name)}">使用</button>
+            </div>
+          `).join('');
+        }
+
+        const meTag = player.isMe ? '<span class="me-tag">你</span>' : '';
+        const countLabel = player.isMe ? `${hexCount} 张` : '已隐藏';
+        return `
+          <article class="player ${player.isMe ? 'me' : ''}">
+            <header>
+              <h2>${esc(player.name)} ${meTag}</h2>
+              <span class="count">${countLabel}</span>
+            </header>
+            <div class="hex-grid">${cardsHtml}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderLogs(state) {
+      if (!Array.isArray(state.logs) || state.logs.length === 0) {
+        logsEl.innerHTML = '<div class="empty">暂无使用记录</div>';
+        return;
+      }
+
+      logsEl.innerHTML = state.logs.map(log => `
+        <div class="log-item">
+          <strong>${esc(log.playerName)}</strong> 使用了 <strong>${esc(log.hexName)}</strong>（${esc(log.targetLabel)}）
+        </div>
+      `).join('');
+    }
+
+    function applyState(state, options = {}) {
+      const force = Boolean(options.force);
+      currentState = state;
+      const needJoin = Boolean(state.needJoin);
+
+      if (needJoin) {
+        if (playerId) {
+          playerId = '';
+          localStorage.removeItem(STORAGE_KEY);
+        }
+        joinLayer.classList.add('visible');
+        drawBtn.disabled = true;
+      } else {
+        joinLayer.classList.remove('visible');
+        drawBtn.disabled = false;
+      }
+
+      const version = Number(state.version || 0);
+      if (!force && version === lastRenderedVersion) {
+        return false;
+      }
+      lastRenderedVersion = version;
+      renderPlayers(state);
+      renderLogs(state);
+      return true;
+    }
+
+    async function fetchState(options = {}) {
+      const silent = options.silent !== false;
+      const force = Boolean(options.force);
+      if (syncInFlight) {
+        return false;
+      }
+      syncInFlight = true;
+      const query = playerId ? `?playerId=${encodeURIComponent(playerId)}` : '';
+      try {
+        const payload = await request('/api/state' + query, 'GET');
+        const changed = applyState(payload.state, { force });
+        if (!silent) {
+          setStatus(changed ? '已同步最新房间状态' : '当前已是最新状态');
+        }
+        return changed;
+      } finally {
+        syncInFlight = false;
+      }
+    }
+
+    async function joinRoom(name) {
+      const form = { name };
+      if (playerId) {
+        form.playerId = playerId;
+      }
+
+      const payload = await request('/api/join', 'POST', form);
+      playerId = payload.playerId;
+      localStorage.setItem(STORAGE_KEY, playerId);
+      applyState(payload.state, { force: true });
+      setStatus('加入房间成功');
+    }
+
+    async function drawHex() {
+      if (!playerId) {
+        setStatus('请先加入房间', true);
+        return;
+      }
+
+      drawBtn.disabled = true;
+      try {
+        const payload = await request('/api/draw', 'POST', { playerId });
+        applyState(payload.state, { force: true });
+        setStatus('抽取成功');
+      } catch (error) {
+        setStatus(error.message, true);
+        if (error.payload && error.payload.needJoin) {
+          joinLayer.classList.add('visible');
+        }
+      } finally {
+        if (currentState && !currentState.needJoin) {
+          drawBtn.disabled = false;
+        }
+      }
+    }
+
+    function openUseModal(cardId, cardName) {
+      activeCardId = cardId;
+      useHexTitle.textContent = `海克斯：${cardName}`;
+      renderUseTargetOptions();
+      useLayer.classList.add('visible');
+    }
+
+    function renderUseTargetOptions() {
+      const players = Array.isArray(currentState?.players) ? currentState.players : [];
+      const others = players.filter(p => !p.isMe);
+      let html = '';
+      html += '<label class="choice"><input type="radio" name="use-target" value="SELF" checked /> 对自己使用</label>';
+      html += '<label class="choice"><input type="radio" name="use-target" value="ALL" /> 对所有人使用</label>';
+      html += others.map(p => (
+        `<label class="choice"><input type="radio" name="use-target" value="PLAYER:${esc(p.id)}" /> 对${esc(p.name)}使用</label>`
+      )).join('');
+      useTargetOptionsEl.innerHTML = html;
+    }
+
+    function closeUseModal() {
+      activeCardId = '';
+      useLayer.classList.remove('visible');
+    }
+
+    async function useHex() {
+      if (!playerId || !activeCardId) {
+        return;
+      }
+
+      const checked = document.querySelector('input[name="use-target"]:checked');
+      const target = checked ? checked.value : 'SELF';
+
+      confirmUseBtn.disabled = true;
+      try {
+        const payload = await request('/api/use', 'POST', {
+          playerId,
+          cardId: activeCardId,
+          target
+        });
+        applyState(payload.state, { force: true });
+        closeUseModal();
+        setStatus('海克斯已使用');
+      } catch (error) {
+        setStatus(error.message, true);
+      } finally {
+        confirmUseBtn.disabled = false;
+      }
+    }
+
+    async function clearRoom() {
+      const yes = confirm('确定要清空房间吗？所有玩家、海克斯和记录都会被移除。');
+      if (!yes) {
+        return;
+      }
+
+      try {
+        const payload = await request('/api/clear', 'POST', {});
+        playerId = '';
+        localStorage.removeItem(STORAGE_KEY);
+        applyState(payload.state, { force: true });
+        setStatus('房间已清空，请重新输入姓名加入');
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    }
+
+    joinForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const name = joinName.value.trim();
+      if (!name) {
+        setStatus('姓名不能为空', true);
+        return;
+      }
+
+      try {
+        await joinRoom(name);
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    });
+
+    drawBtn.addEventListener('click', drawHex);
+    refreshBtn.addEventListener('click', () => {
+      fetchState({ silent: false, force: true }).catch((error) => setStatus(error.message, true));
+    });
+    clearBtn.addEventListener('click', clearRoom);
+
+    playersEl.addEventListener('click', (event) => {
+      const button = event.target.closest('.use-btn');
+      if (!button) {
+        return;
+      }
+      openUseModal(button.dataset.cardId || '', button.dataset.cardName || '');
+    });
+
+    confirmUseBtn.addEventListener('click', useHex);
+    cancelUseBtn.addEventListener('click', closeUseModal);
+    useLayer.addEventListener('click', (event) => {
+      if (event.target === useLayer) {
+        closeUseModal();
+      }
+    });
+
+    async function bootstrap() {
+      if (location.protocol === 'file:') {
+        setStatus('请通过 http(s) 链接访问页面，不要直接打开本地文件。', true);
+        return;
+      }
+
+      try {
+        await fetchState({ silent: false, force: true });
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+
+      setInterval(async () => {
+        try {
+          await fetchState({ silent: true, force: false });
+        } catch (error) {
+          setStatus('同步失败：' + error.message, true);
+        }
+      }, 5000);
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>
